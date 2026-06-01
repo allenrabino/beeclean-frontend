@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Leaderboard Podium
 //
 // Top 3 in a light podium layout: 2nd left, 1st center (tallest),
-// 3rd right. Purple avatar rings with rank badges, name + score below.
+// 3rd right. Gold, silver, and bronze avatar rings with rank badges.
 
 struct LeaderboardPodiumView: View {
     enum Style {
@@ -14,8 +14,6 @@ struct LeaderboardPodiumView: View {
     let entries: [LeaderboardEntry]
     var style: Style = .full
     var onSelect: ((LeaderboardEntry) -> Void)?
-
-    private var accent: Color { .categoryViolet }
 
     var body: some View {
         HStack(alignment: .bottom, spacing: style == .full ? 20 : 12) {
@@ -38,6 +36,7 @@ struct LeaderboardPodiumView: View {
     // MARK: Column
 
     private func podiumColumn(_ entry: LeaderboardEntry, place: Int) -> some View {
+        let theme = PodiumMedalTheme(place: place)
         let avatarSize: CGFloat = switch (style, place) {
         case (.full, 1): 88
         case (.full, _): 72
@@ -53,7 +52,7 @@ struct LeaderboardPodiumView: View {
             ZStack(alignment: .bottom) {
                 ZStack {
                     Circle()
-                        .strokeBorder(accent, lineWidth: ringWidth)
+                        .strokeBorder(theme.ringGradient, lineWidth: ringWidth)
                         .frame(width: avatarSize, height: avatarSize)
                     BeeAvatarView(equippedAssetIds: entry.equippedAccessoryIds, size: innerSize)
                         .frame(width: innerSize, height: innerSize)
@@ -62,9 +61,10 @@ struct LeaderboardPodiumView: View {
 
                 Text("\(place)")
                     .font(.system(size: style == .full ? 12 : 10, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(theme.badgeText)
                     .frame(width: badgeSize, height: badgeSize)
-                    .background(Circle().fill(accent))
+                    .background(Circle().fill(theme.badgeFill))
+                    .overlay(Circle().strokeBorder(theme.badgeStroke, lineWidth: 0.5))
                     .offset(y: badgeSize / 2 - 2)
             }
             .frame(width: avatarSize, height: avatarSize + badgeSize / 2)
@@ -81,6 +81,55 @@ struct LeaderboardPodiumView: View {
         .frame(maxWidth: .infinity)
         .contentShape(Rectangle())
         .onTapGesture { onSelect?(entry) }
+    }
+}
+
+// MARK: - Medal Theme
+
+private struct PodiumMedalTheme {
+    let place: Int
+
+    var ringGradient: LinearGradient {
+        switch place {
+        case 1:
+            return LinearGradient(
+                colors: [Color(hex: "FFE566"), Color(hex: "D4A01C"), Color(hex: "A87408")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case 2:
+            return LinearGradient(
+                colors: [Color(hex: "F0F0F2"), Color(hex: "B0B6BA"), Color(hex: "8A9096")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        default:
+            return LinearGradient(
+                colors: [Color(hex: "E8A86B"), Color(hex: "B87333"), Color(hex: "8B5A2B")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+
+    var badgeFill: Color {
+        switch place {
+        case 1: return Color(hex: "D4A01C")
+        case 2: return Color(hex: "9CA3AF")
+        default: return Color(hex: "B87333")
+        }
+    }
+
+    var badgeStroke: Color {
+        switch place {
+        case 1: return Color(hex: "A87408").opacity(0.5)
+        case 2: return Color(hex: "6B7280").opacity(0.4)
+        default: return Color(hex: "8B5A2B").opacity(0.45)
+        }
+    }
+
+    var badgeText: Color {
+        place == 2 ? Color(hex: "1C1917") : .white
     }
 }
 
