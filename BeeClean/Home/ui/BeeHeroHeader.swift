@@ -4,6 +4,7 @@ import SwiftUI
 /// Premium hero section with landscape background image, bee mascot
 /// standing on the ground line, greeting text + settings gear.
 struct HeroMascot: View {
+    @ObservedObject private var bitePalVM = BitePalViewModel.shared
 
     let screenWidth: CGFloat
     let screenHeight: CGFloat
@@ -35,18 +36,32 @@ struct HeroMascot: View {
                 .clipped()
 
             // Bee mascot – feet on the horizon line
-            Image(assetOrSymbol: "BeeHero")
-                .resizable()
-                .interpolation(.high)
-                .antialiased(true)
-                .scaledToFit()
-                .frame(width: beeSize, height: beeSize)
-                .offset(y: beeOffsetY + floatOffset)
-                .animation(
-                    .easeInOut(duration: 1.8).repeatForever(autoreverses: true),
-                    value: floatOffset
-                )
-                .onAppear { floatOffset = -6 }
+            ZStack {
+                Image(assetOrSymbol: "BeeHero")
+                    .resizable()
+                    .interpolation(.high)
+                    .antialiased(true)
+                    .scaledToFit()
+                    .frame(width: beeSize, height: beeSize)
+
+                if bitePalVM.isShopSheetPresented {
+                    BeeAvatarView(
+                        equippedAssetIds: bitePalVM.displayEquippedIds,
+                        size: beeSize,
+                        showsBaseBee: false
+                    )
+                    .animation(
+                        .spring(response: 0.35, dampingFraction: 0.82),
+                        value: bitePalVM.displayEquippedIds
+                    )
+                }
+            }
+            .offset(y: beeOffsetY + floatOffset)
+            .animation(
+                .easeInOut(duration: 1.8).repeatForever(autoreverses: true),
+                value: floatOffset
+            )
+            .onAppear { floatOffset = -6 }
         }
         .frame(width: screenWidth, height: totalHeight)
     }

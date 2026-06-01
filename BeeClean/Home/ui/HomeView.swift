@@ -132,9 +132,22 @@ struct HomeView: View {
             .navigationDestination(item: $selectedCategory) { category in
                 CategoryDetailView(category: category)
             }
-            .navigationDestination(item: $topDestination) { destination in
+            .sheet(isPresented: Binding(
+                get: { topDestination == .shop },
+                set: { if !$0 { topDestination = nil } }
+            )) {
+                BitePalView()
+                    .presentationDetents([.fraction(0.50), .large])
+                    .presentationDragIndicator(.visible)
+                    .presentationCornerRadius(28)
+                    .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.50)))
+            }
+            .navigationDestination(item: Binding(
+                get: { topDestination != .shop ? topDestination : nil },
+                set: { if $0 == nil && topDestination != .shop { topDestination = nil } }
+            )) { destination in
                 switch destination {
-                case .shop:        BitePalView()
+                case .shop:        EmptyView()
                 case .leaderboard: LeaderboardView()
                 case .coins:       CoinsView()
                 }

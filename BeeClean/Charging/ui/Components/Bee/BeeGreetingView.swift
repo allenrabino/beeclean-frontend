@@ -7,6 +7,7 @@ import SwiftUI
 struct BeeGreetingView: View {
     @AppStorage("userName") private var beeName = ""
     @ObservedObject private var theme = ThemeManager.shared
+    @ObservedObject private var bitePalVM = BitePalViewModel.shared
 
     let heroHeight: CGFloat
     let safeAreaTop: CGFloat
@@ -37,10 +38,16 @@ struct BeeGreetingView: View {
             VStack {
                 Spacer(minLength: 0)
 
-                BeeProgressAnimationView(
-                    progress: progress,
-                    isAnimating: isAnimating
-                )
+                ZStack {
+                    BeeProgressAnimationView(
+                        progress: progress,
+                        isAnimating: isAnimating
+                    )
+
+                    if bitePalVM.isShopSheetPresented {
+                        shopAccessoryOverlay
+                    }
+                }
                 .frame(height: heroHeight)
                 .scaleEffect(2)
                 .offset(y: 64)
@@ -71,6 +78,20 @@ struct BeeGreetingView: View {
 
         }
         .frame(height: heroHeight)
+    }
+
+    /// Accessory layers only — the animated bee underneath stays visible.
+    private var shopAccessoryOverlay: some View {
+        BeeAvatarView(
+            equippedAssetIds: bitePalVM.displayEquippedIds,
+            size: heroHeight * 0.42,
+            showsBaseBee: false
+        )
+        .animation(
+            .spring(response: 0.35, dampingFraction: 0.82),
+            value: bitePalVM.displayEquippedIds
+        )
+        .allowsHitTesting(false)
     }
 
 }

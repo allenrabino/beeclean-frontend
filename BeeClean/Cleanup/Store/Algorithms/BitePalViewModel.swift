@@ -47,6 +47,15 @@ final class BitePalViewModel: ObservableObject {
         Array(equippedByCategory.values)
     }
 
+    /// True while the shop bottom sheet is on screen — drives accessory
+    /// overlays on the homepage bee (ChargingView / HomeView).
+    @Published private(set) var isShopSheetPresented: Bool = false
+
+    func setShopSheetPresented(_ presented: Bool) {
+        guard isShopSheetPresented != presented else { return }
+        isShopSheetPresented = presented
+    }
+
     /// Non-persisted shop preview — lets the user try an item on the
     /// bee before buying or equipping it.
     @Published private(set) var previewAccessoryId: String? = nil

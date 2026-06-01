@@ -2,80 +2,44 @@ import SwiftUI
 
 // MARK: - BitePal View
 //
-// The accessory shop. Modeled on the BitePal raccoon-store reference:
-//   • Top hero — bee preview with whatever's equipped, name, hearts,
-//     and a coin balance pill on the trailing edge.
-//   • Category tab strip — one icon per AccessoryCategory.
-//   • Grid of accessory cards filtered to the selected category.
+// Accessory shop presented as a bottom sheet over the homepage bee
+// (BitePal-style). The hero preview lives on the dashboard — this view
+// is category tabs + item grid only.
 struct BitePalView: View {
     @StateObject private var vm = BitePalViewModel.shared
     @ObservedObject private var stats = HiveStatsManager.shared
     @State private var selectedCategory: AccessoryCategory = .hats
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: false) {
+        NavigationStack {
             VStack(spacing: 0) {
-                hero
+                sheetHeader
                 categoryTabs
-                grid
-            }
-        }
-        .background(
-            LinearGradient(
-                colors: [Color(hex: "FFE066"), Color(hex: "FFC93C")],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-        )
-        .navigationTitle("BitePal")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("BitePal")
-                    .font(.titleMedium)
-                    .foregroundColor(.foreground)
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink {
-                    InventoryView()
-                } label: {
-                    Image(systemName: "archivebox.fill")
+                ScrollView(.vertical, showsIndicators: false) {
+                    grid
                 }
             }
+            .background(Color.white.ignoresSafeArea())
+            .toolbar(.hidden, for: .navigationBar)
         }
+        .onAppear { vm.setShopSheetPresented(true) }
+        .onDisappear { vm.setShopSheetPresented(false) }
         .task { await vm.pullRemoteIfNeeded() }
     }
 
-    // MARK: Hero
+    // MARK: Sheet Header
 
-    private var hero: some View {
-        ZStack(alignment: .topTrailing) {
-            VStack(spacing: 12) {
-                BeeAvatarView(equippedAssetIds: vm.displayEquippedIds, size: 200)
-                    .frame(height: 220)
-                    .animation(.spring(response: 0.35, dampingFraction: 0.82), value: vm.displayEquippedIds)
-
-                Text("Caramel")
-                    .font(.titleLarge)
-                    .foregroundColor(.foreground)
-
-                HStack(spacing: 6) {
-                    ForEach(0..<4) { i in
-                        Image(systemName: i < 1 ? "heart.fill" : "heart")
-                            .foregroundColor(i < 1 ? .red : .red.opacity(0.4))
-                    }
-                }
-
-                if vm.previewAccessoryId != nil {
-                    Text("Previewing — tap item again to clear")
-                        .font(.bodySmall)
-                        .foregroundColor(.foreground.opacity(0.72))
-                }
+    private var sheetHeader: some View {
+        HStack(alignment: .center, spacing: 8) {
+            if vm.previewAccessoryId != nil {
+                Text("Previewing — tap again to clear")
+                    .font(.bodySmall)
+                    .foregroundColor(.mutedForeground)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
-            .padding(.top, 28)
-            .padding(.bottom, 8)
-            .frame(maxWidth: .infinity)
+
+            Spacer(minLength: 0)
 
             HStack(spacing: 6) {
                 Image(systemName: "bitcoinsign.circle.fill")
@@ -86,10 +50,22 @@ struct BitePalView: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(Capsule().fill(Color.white.opacity(0.85)))
-            .padding(.trailing, 16)
-            .padding(.top, 12)
+            .background(Capsule().fill(Color(hex: "F2F2F7")))
+
+            NavigationLink {
+                InventoryView()
+            } label: {
+                Image(systemName: "archivebox.fill")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.foreground)
+                    .frame(width: 36, height: 36)
+                    .background(Circle().fill(Color(hex: "F2F2F7")))
+            }
+            .buttonStyle(.plain)
         }
+        .padding(.horizontal, 16)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
     }
 
     // MARK: Category Tabs
@@ -104,7 +80,7 @@ struct BitePalView: View {
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(.vertical, 10)
             }
             .onAppear {
                 proxy.scrollTo(selectedCategory, anchor: .center)
@@ -115,11 +91,11 @@ struct BitePalView: View {
                 }
             }
         }
-        .background(
-            RoundedRectangle(cornerRadius: DesignTokens.Radius.xl, style: .continuous)
-                .fill(Color.white.opacity(0.45))
-        )
-        .padding(.horizontal, 12)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.black.opacity(0.08))
+                .frame(height: 0.5)
+        }
     }
 
     private func categoryTabButton(_ category: AccessoryCategory) -> some View {
@@ -132,22 +108,20 @@ struct BitePalView: View {
             }
             vm.clearPreview()
         } label: {
-            VStack(spacing: 5) {
+            VStack(spacing: 6) {
                 Image(systemName: category.sfSymbol)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(isSelected ? .white : category.tint)
-                    .frame(width: 44, height: 44)
-                    .background(
-                        Circle().fill(isSelected ? category.tint : Color.white.opacity(0.9))
-                    )
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(isSelected ? category.tint : .mutedForeground)
 
-                Text(category.displayName)
-                    .font(.labelSmall)
-                    .foregroundColor(.foreground)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                    .frame(width: 58)
+                if isSelected {
+                    Capsule()
+                        .fill(Color.foreground)
+                        .frame(width: 28, height: 3)
+                } else {
+                    Color.clear.frame(width: 28, height: 3)
+                }
             }
+            .frame(width: 52)
         }
         .buttonStyle(.plain)
     }
@@ -167,18 +141,16 @@ struct BitePalView: View {
                 BitePalAccessoryCard(accessory: accessory, vm: vm)
                     .background(
                         RoundedRectangle(cornerRadius: DesignTokens.Radius.lg, style: .continuous)
-                            .fill(Color.card)
+                            .fill(Color(hex: "F5F5F7"))
                     )
             }
         }
         .padding(.horizontal, 12)
-        .padding(.top, 14)
+        .padding(.top, 12)
         .padding(.bottom, 24)
     }
 }
 
 #Preview {
-    NavigationStack {
-        BitePalView()
-    }
+    BitePalView()
 }

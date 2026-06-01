@@ -122,29 +122,17 @@ struct TodaysCleanupCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 8)
-        // Shop opens as a bottom sheet (BitePal-style: it overtakes the
-        // lower half of the dashboard and the grip-handle drag drops
-        // back to the homepage). Leaderboard + Coins still push as
-        // regular destinations.
+        // Shop opens as a bottom sheet (BitePal-style): ~50% height so the
+        // dashboard bee stays visible; no duplicate hero inside the sheet.
         .sheet(isPresented: Binding(
             get: { topDestination == .shop },
             set: { if !$0 { topDestination = nil } }
         )) {
-            // Sheet top edge lands exactly where the Total Space to
-            // Clean card starts. The bee hero takes ~50% of screen
-            // height, so a 0.50 detent puts the sheet's top edge
-            // right at the card's top edge — the store visually
-            // "replaces" the lower stack (TSC + Quick Access + Source
-            // row) without covering the bee. Drag up to expand to
-            // full screen, drag down to dismiss.
-            // Sheet top edge sits AT the Total Space to Clean card's
-            // top edge — covers the card + Quick Access row + Source
-            // row in one sweep, matching BitePal's "store takes over
-            // the lower half of the home" pattern.
             BitePalView()
-                .presentationDetents([.fraction(0.65), .large])
+                .presentationDetents([.fraction(0.50), .large])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(28)
+                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.50)))
         }
         .navigationDestination(item: Binding(
             get: { topDestination != .shop ? topDestination : nil },
