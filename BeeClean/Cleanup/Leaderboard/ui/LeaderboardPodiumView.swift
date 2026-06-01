@@ -76,14 +76,7 @@ struct LeaderboardPodiumView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
 
-            HStack(spacing: 4) {
-                Image(systemName: "bitcoinsign.circle.fill")
-                    .font(.system(size: style == .full ? 11 : 9, weight: .semibold))
-                    .foregroundColor(.mutedForeground)
-                Text(LeaderboardFormatting.coins(entry.coins))
-                    .font(style == .full ? .bodySmall : .labelSmall)
-                    .foregroundColor(.mutedForeground)
-            }
+            LeaderboardEntryStats(entry: entry, layout: style == .full ? .podium : .podiumCompact)
         }
         .frame(maxWidth: .infinity)
         .contentShape(Rectangle())
@@ -98,6 +91,75 @@ enum LeaderboardFormatting {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
+
+    static func storageFreed(_ valueGB: Double) -> String {
+        String(format: "%.1f GB cleaned", valueGB)
+    }
+}
+
+// MARK: - Entry Stats
+
+struct LeaderboardEntryStats: View {
+    enum Layout {
+        case podium
+        case podiumCompact
+        case row
+    }
+
+    let entry: LeaderboardEntry
+    var layout: Layout = .row
+
+    var body: some View {
+        switch layout {
+        case .podium, .podiumCompact:
+            VStack(spacing: layout == .podium ? 4 : 2) {
+                statLine(
+                    symbol: "bitcoinsign.circle.fill",
+                    text: LeaderboardFormatting.coins(entry.coins),
+                    font: layout == .podium ? .bodySmall : .labelSmall
+                )
+                statLine(
+                    symbol: "externaldrive.fill",
+                    text: LeaderboardFormatting.storageFreed(entry.storageFreedGB),
+                    font: layout == .podium ? .bodySmall : .labelSmall
+                )
+            }
+        case .row:
+            VStack(alignment: .trailing, spacing: 2) {
+                statLine(
+                    symbol: "bitcoinsign.circle.fill",
+                    text: LeaderboardFormatting.coins(entry.coins),
+                    font: .bodySmall
+                )
+                statLine(
+                    symbol: "externaldrive.fill",
+                    text: LeaderboardFormatting.storageFreed(entry.storageFreedGB),
+                    font: .labelSmall
+                )
+            }
+        }
+    }
+
+    private func statLine(symbol: String, text: String, font: Font) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: symbol)
+                .font(.system(size: iconSize, weight: .semibold))
+                .foregroundColor(.mutedForeground)
+            Text(text)
+                .font(font)
+                .foregroundColor(.mutedForeground)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+    }
+
+    private var iconSize: CGFloat {
+        switch layout {
+        case .podium: return 11
+        case .podiumCompact: return 9
+        case .row: return 10
+        }
     }
 }
 

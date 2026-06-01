@@ -81,9 +81,7 @@ struct LeaderboardRow: View {
     }
 
     private var statLabel: some View {
-        Text(LeaderboardFormatting.coins(entry.coins))
-            .font(.bodySmall)
-            .foregroundColor(.mutedForeground)
+        LeaderboardEntryStats(entry: entry, layout: .row)
     }
 
     private var rowSurface: some View {

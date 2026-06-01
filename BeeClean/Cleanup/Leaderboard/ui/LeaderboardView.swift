@@ -3,8 +3,8 @@ import SwiftUI
 // MARK: - Leaderboard View
 //
 // One ladder, no toggle. Coins are the single ranking metric. Top 3
-// get a purple-ring podium; ranks 4–100 use light list rows with the
-// current user highlighted in an elevated card.
+// get a purple-ring podium; ranks 4–100 use light list rows with coins
+// and storage cleaned shown alongside. Current user gets an elevated card.
 
 struct LeaderboardView: View {
     @StateObject private var vm = LeaderboardViewModel.shared
