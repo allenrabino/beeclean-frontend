@@ -75,9 +75,7 @@ struct LeaderboardRow: View {
     }
 
     private var avatar: some View {
-        BeeAvatarView(equippedAssetIds: entry.equippedAccessoryIds, size: 36)
-            .frame(width: 40, height: 40)
-            .clipShape(Circle())
+        LeaderboardPlaceholderAvatar(entry: entry, size: 40)
     }
 
     private var statLabel: some View {

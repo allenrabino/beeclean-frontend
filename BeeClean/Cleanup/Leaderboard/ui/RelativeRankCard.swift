@@ -59,13 +59,12 @@ struct RelativeRankCard: View {
     private func rankRow(_ entry: LeaderboardEntry) -> some View {
         HStack(spacing: 12) {
             ZStack {
-                BeeAvatarView(equippedAssetIds: entry.equippedAccessoryIds, size: 56)
+                LeaderboardPlaceholderAvatar(entry: entry, size: 56)
                 if entry.inTop100 {
                     LeaderboardGlassAvatarRing(isSelf: true)
                 }
             }
             .frame(width: 64, height: 64)
-            .clipShape(Circle())
             VStack(alignment: .leading, spacing: 4) {
                 Text("#\(entry.rank) · \(entry.displayName)")
                     .font(.labelMedium)

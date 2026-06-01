@@ -54,9 +54,7 @@ struct LeaderboardPodiumView: View {
                     Circle()
                         .strokeBorder(theme.ringGradient, lineWidth: ringWidth)
                         .frame(width: avatarSize, height: avatarSize)
-                    BeeAvatarView(equippedAssetIds: entry.equippedAccessoryIds, size: innerSize)
-                        .frame(width: innerSize, height: innerSize)
-                        .clipShape(Circle())
+                    LeaderboardPlaceholderAvatar(entry: entry, size: innerSize)
                 }
 
                 Text("\(place)")
