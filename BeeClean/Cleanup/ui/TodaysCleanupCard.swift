@@ -129,7 +129,8 @@ struct TodaysCleanupCard: View {
             set: { if !$0 { topDestination = nil } }
         )) {
             BitePalView()
-                .presentationDetents([.fraction(0.50), .large])
+                // Single detent — drag down to dismiss only; cannot expand upward.
+                .presentationDetents([.fraction(0.50)])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(28)
                 .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.50)))
