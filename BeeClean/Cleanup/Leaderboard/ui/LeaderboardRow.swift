@@ -2,83 +2,96 @@ import SwiftUI
 
 // MARK: - Leaderboard Row
 //
-// Single ladder row outside the podium. Top 100 bees get a glass-polish
-// treatment — frosted surface, specular rim, and a polished avatar ring.
+// List row for ranks 4+. The current user's row lifts as a white card
+// with a soft shadow; rank sits outside the card on the left.
 
 struct LeaderboardRow: View {
     let entry: LeaderboardEntry
 
-    private var isGlassPolished: Bool { entry.inTop100 }
-
     var body: some View {
+        if entry.isSelf {
+            selfRow
+        } else {
+            standardRow
+        }
+    }
+
+    // MARK: Standard
+
+    private var standardRow: some View {
         HStack(spacing: 12) {
-            Text("#\(entry.rank)")
-                .font(.labelMedium)
-                .foregroundColor(isGlassPolished ? .foreground.opacity(0.7) : .mutedForeground)
-                .frame(width: 38, alignment: .leading)
-
+            rankLabel
             avatar
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(entry.displayName)
-                    .font(.labelMedium)
-                    .foregroundColor(.foreground)
-                HStack(spacing: 4) {
-                    Image(systemName: "externaldrive.fill")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(.mutedForeground)
-                    Text(String(format: "%.1f GB", entry.storageFreedGB))
-                        .font(.bodySmall)
-                        .foregroundColor(.mutedForeground)
-                }
-            }
-
-            Spacer()
-
-            HStack(spacing: 4) {
-                Image(systemName: "bitcoinsign.circle.fill")
-                    .foregroundStyle(LinearGradient.honeyGradient)
-                Text(LeaderboardFormatting.coins(entry.coins))
-                    .font(.titleSmall)
-                    .foregroundColor(.foreground)
-            }
+            Text(entry.displayName)
+                .font(.labelMedium)
+                .fontWeight(.semibold)
+                .foregroundColor(.foreground)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            statLabel
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(rowBackground)
+        .padding(.vertical, 12)
+        .background(rowSurface)
+    }
+
+    // MARK: Self (elevated card)
+
+    private var selfRow: some View {
+        HStack(spacing: 10) {
+            Text("\(entry.rank)")
+                .font(.labelMedium)
+                .foregroundColor(.mutedForeground)
+                .frame(width: 24, alignment: .center)
+
+            HStack(spacing: 12) {
+                avatar
+                Text(entry.displayName)
+                    .font(.labelMedium)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.foreground)
+                    .lineLimit(1)
+                Spacer(minLength: 8)
+                statLabel
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.lg, style: .continuous)
+                    .fill(Color.card)
+            )
+            .shadow(color: Color.black.opacity(0.08), radius: 16, x: 0, y: 6)
+            .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
+        }
+    }
+
+    // MARK: Shared
+
+    private var rankLabel: some View {
+        Text("\(entry.rank)")
+            .font(.labelMedium)
+            .foregroundColor(.mutedForeground)
+            .frame(width: 24, alignment: .center)
     }
 
     private var avatar: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    isGlassPolished
-                        ? Color(hex: "1E1E22").opacity(0.08)
-                        : (entry.isSelf ? Color.accentColor.opacity(0.18) : Color.surfaceLight)
-                )
-            BeeAvatarView(equippedAssetIds: entry.equippedAccessoryIds, size: 32)
-            if isGlassPolished {
-                LeaderboardGlassAvatarRing(isSelf: entry.isSelf)
-            }
-        }
-        .frame(width: 40, height: 40)
-        .clipShape(Circle())
+        BeeAvatarView(equippedAssetIds: entry.equippedAccessoryIds, size: 36)
+            .frame(width: 40, height: 40)
+            .clipShape(Circle())
     }
 
-    @ViewBuilder
-    private var rowBackground: some View {
-        if isGlassPolished {
-            LeaderboardGlassRowBackground(isSelf: entry.isSelf)
-        } else {
-            RoundedRectangle(cornerRadius: DesignTokens.Radius.md, style: .continuous)
-                .fill(entry.isSelf ? Color.accentColor.opacity(0.08) : Color.card)
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignTokens.Radius.md, style: .continuous)
-                        .strokeBorder(
-                            entry.isSelf ? Color.accentColor : Color.border,
-                            lineWidth: entry.isSelf ? 1.5 : 0.5
-                        )
-                )
-        }
+    private var statLabel: some View {
+        Text(LeaderboardFormatting.coins(entry.coins))
+            .font(.bodySmall)
+            .foregroundColor(.mutedForeground)
+    }
+
+    private var rowSurface: some View {
+        RoundedRectangle(cornerRadius: DesignTokens.Radius.lg, style: .continuous)
+            .fill(Color.card)
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.lg, style: .continuous)
+                    .strokeBorder(Color.border.opacity(0.6), lineWidth: 0.5)
+            )
     }
 }

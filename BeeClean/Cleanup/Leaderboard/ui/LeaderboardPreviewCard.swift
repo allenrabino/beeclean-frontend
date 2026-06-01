@@ -51,7 +51,7 @@ struct LeaderboardPreviewCard: View {
                 Text("Leaderboard")
                     .font(.titleSmall)
                     .foregroundColor(.foreground)
-                Text("Ranked by coins · storage freed shown alongside")
+                Text("Top cleaners ranked by coins")
                     .font(.bodySmall)
                     .foregroundColor(.mutedForeground)
             }
