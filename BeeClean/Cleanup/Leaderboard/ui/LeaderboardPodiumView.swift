@@ -143,7 +143,14 @@ enum LeaderboardFormatting {
     }
 
     static func storageFreed(_ valueGB: Double) -> String {
-        String(format: "%.1f GB", valueGB)
+        let display = storageDisplay(valueGB)
+        return "\(display.value) \(display.unit)"
+    }
+
+    static func storageDisplay(_ valueGB: Double) -> (value: String, unit: String) {
+        let hasFraction = abs(valueGB.truncatingRemainder(dividingBy: 1)) >= 0.05
+        let value = hasFraction ? String(format: "%.1f", valueGB) : String(format: "%.0f", valueGB)
+        return (value, "GB")
     }
 }
 
@@ -162,31 +169,64 @@ struct LeaderboardEntryStats: View {
     var body: some View {
         switch layout {
         case .podium, .podiumCompact:
-            VStack(spacing: layout == .podium ? 4 : 2) {
-                statLine(
-                    symbol: "bitcoinsign.circle.fill",
-                    text: LeaderboardFormatting.coins(entry.coins),
-                    font: layout == .podium ? .bodySmall : .labelSmall
-                )
-                statLine(
-                    symbol: "externaldrive.fill",
-                    text: LeaderboardFormatting.storageFreed(entry.storageFreedGB),
-                    font: layout == .podium ? .bodySmall : .labelSmall
-                )
+            VStack(spacing: layout == .podium ? 6 : 4) {
+                coinsStat(font: layout == .podium ? .bodySmall : .labelSmall)
+                storageStat(font: layout == .podium ? .bodySmall : .labelSmall)
             }
         case .row:
-            VStack(alignment: .trailing, spacing: 2) {
-                statLine(
-                    symbol: "bitcoinsign.circle.fill",
-                    text: LeaderboardFormatting.coins(entry.coins),
-                    font: .bodySmall
-                )
-                statLine(
-                    symbol: "externaldrive.fill",
-                    text: LeaderboardFormatting.storageFreed(entry.storageFreedGB),
-                    font: .labelSmall
-                )
+            VStack(alignment: .trailing, spacing: 4) {
+                coinsStat(font: .bodySmall)
+                storageStat(font: .labelSmall)
             }
+        }
+    }
+
+    private func coinsStat(font: Font) -> some View {
+        statLine(
+            symbol: "bitcoinsign.circle.fill",
+            text: LeaderboardFormatting.coins(entry.coins),
+            font: font
+        )
+    }
+
+    private func storageStat(font: Font) -> some View {
+        let storage = LeaderboardFormatting.storageDisplay(entry.storageFreedGB)
+
+        return HStack(alignment: .firstTextBaseline, spacing: 2) {
+            Text(storage.value)
+                .font(font)
+                .fontWeight(.semibold)
+                .foregroundColor(.foreground.opacity(0.78))
+                .monospacedDigit()
+            Text(storage.unit)
+                .font(.system(size: unitSize(for: font), weight: .medium))
+                .foregroundColor(.mutedForeground)
+        }
+        .padding(.horizontal, storagePadding.horizontal)
+        .padding(.vertical, storagePadding.vertical)
+        .background(
+            Capsule(style: .continuous)
+                .fill(Color.secondaryColor.opacity(0.08))
+        )
+        .overlay(
+            Capsule(style: .continuous)
+                .strokeBorder(Color.secondaryColor.opacity(0.14), lineWidth: 0.5)
+        )
+    }
+
+    private var storagePadding: (horizontal: CGFloat, vertical: CGFloat) {
+        switch layout {
+        case .podium: return (10, 4)
+        case .podiumCompact: return (8, 3)
+        case .row: return (8, 3)
+        }
+    }
+
+    private func unitSize(for font: Font) -> CGFloat {
+        switch layout {
+        case .podium: return 11
+        case .podiumCompact: return 9
+        case .row: return 10
         }
     }
 
