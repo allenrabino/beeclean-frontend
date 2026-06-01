@@ -182,68 +182,127 @@ struct LeaderboardEntryStats: View {
     }
 
     private func coinsStat(font: Font) -> some View {
-        statLine(
+        statChip(
             symbol: "bitcoinsign.circle.fill",
-            text: LeaderboardFormatting.coins(entry.coins),
-            font: font
-        )
-    }
-
-    private func storageStat(font: Font) -> some View {
-        let storage = LeaderboardFormatting.storageDisplay(entry.storageFreedGB)
-
-        return HStack(alignment: .firstTextBaseline, spacing: 2) {
-            Text(storage.value)
+            iconStyle: .coin,
+            chipFill: Color.categoryHoney.opacity(0.10),
+            chipStroke: Color.categoryHoney.opacity(0.20)
+        ) {
+            Text(LeaderboardFormatting.coins(entry.coins))
                 .font(font)
                 .fontWeight(.semibold)
-                .foregroundColor(.foreground.opacity(0.78))
+                .foregroundColor(.foreground.opacity(0.82))
                 .monospacedDigit()
-            Text(storage.unit)
-                .font(.system(size: unitSize(for: font), weight: .medium))
-                .foregroundColor(.mutedForeground)
-        }
-        .padding(.horizontal, storagePadding.horizontal)
-        .padding(.vertical, storagePadding.vertical)
-        .background(
-            Capsule(style: .continuous)
-                .fill(Color.secondaryColor.opacity(0.08))
-        )
-        .overlay(
-            Capsule(style: .continuous)
-                .strokeBorder(Color.secondaryColor.opacity(0.14), lineWidth: 0.5)
-        )
-    }
-
-    private var storagePadding: (horizontal: CGFloat, vertical: CGFloat) {
-        switch layout {
-        case .podium: return (10, 4)
-        case .podiumCompact: return (8, 3)
-        case .row: return (8, 3)
-        }
-    }
-
-    private func unitSize(for font: Font) -> CGFloat {
-        switch layout {
-        case .podium: return 11
-        case .podiumCompact: return 9
-        case .row: return 10
-        }
-    }
-
-    private func statLine(symbol: String, text: String, font: Font) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: symbol)
-                .font(.system(size: iconSize, weight: .semibold))
-                .foregroundColor(.mutedForeground)
-            Text(text)
-                .font(font)
-                .foregroundColor(.mutedForeground)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
     }
 
-    private var iconSize: CGFloat {
+    private func storageStat(font: Font) -> some View {
+        let storage = LeaderboardFormatting.storageDisplay(entry.storageFreedGB)
+
+        return statChip(
+            symbol: "internaldrive.fill",
+            iconStyle: .storage,
+            chipFill: Color.secondaryColor.opacity(0.10),
+            chipStroke: Color.secondaryColor.opacity(0.18)
+        ) {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(storage.value)
+                    .font(font)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.foreground.opacity(0.82))
+                    .monospacedDigit()
+                Text(storage.unit)
+                    .font(.system(size: unitSize(for: font), weight: .medium))
+                    .foregroundColor(.mutedForeground)
+            }
+        }
+    }
+
+    private enum StatIconStyle {
+        case coin
+        case storage
+    }
+
+    private func statChip<Content: View>(
+        symbol: String,
+        iconStyle: StatIconStyle,
+        chipFill: Color,
+        chipStroke: Color,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack(spacing: 6) {
+            statIcon(symbol: symbol, style: iconStyle)
+            content()
+        }
+        .padding(.horizontal, chipPadding.horizontal)
+        .padding(.vertical, chipPadding.vertical)
+        .background(
+            Capsule(style: .continuous)
+                .fill(chipFill)
+        )
+        .overlay(
+            Capsule(style: .continuous)
+                .strokeBorder(chipStroke, lineWidth: 0.5)
+        )
+    }
+
+    private func statIcon(symbol: String, style: StatIconStyle) -> some View {
+        ZStack {
+            Circle()
+                .fill(iconBadgeFill(for: style))
+                .frame(width: iconBadgeSize, height: iconBadgeSize)
+            Image(systemName: symbol)
+                .font(.system(size: iconBadgeSymbolSize, weight: .semibold))
+                .foregroundStyle(iconForeground(for: style))
+        }
+    }
+
+    private func iconBadgeFill(for style: StatIconStyle) -> Color {
+        switch style {
+        case .coin: return Color.categoryHoney.opacity(0.18)
+        case .storage: return Color.secondaryColor.opacity(0.16)
+        }
+    }
+
+    private func iconForeground(for style: StatIconStyle) -> some ShapeStyle {
+        switch style {
+        case .coin: return LinearGradient.honeyGradient
+        case .storage:
+            return LinearGradient(
+                colors: [Color(hex: "34BFA8"), Color.secondaryColor],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+
+    private var chipPadding: (horizontal: CGFloat, vertical: CGFloat) {
+        switch layout {
+        case .podium: return (10, 5)
+        case .podiumCompact: return (8, 4)
+        case .row: return (8, 4)
+        }
+    }
+
+    private var iconBadgeSize: CGFloat {
+        switch layout {
+        case .podium: return 20
+        case .podiumCompact: return 16
+        case .row: return 18
+        }
+    }
+
+    private var iconBadgeSymbolSize: CGFloat {
+        switch layout {
+        case .podium: return 10
+        case .podiumCompact: return 8
+        case .row: return 9
+        }
+    }
+
+    private func unitSize(for font: Font) -> CGFloat {
         switch layout {
         case .podium: return 11
         case .podiumCompact: return 9
