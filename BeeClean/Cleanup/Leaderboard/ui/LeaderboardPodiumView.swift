@@ -94,7 +94,7 @@ enum LeaderboardFormatting {
     }
 
     static func storageFreed(_ valueGB: Double) -> String {
-        String(format: "%.1f GB cleaned", valueGB)
+        String(format: "%.1f GB", valueGB)
     }
 }
 
