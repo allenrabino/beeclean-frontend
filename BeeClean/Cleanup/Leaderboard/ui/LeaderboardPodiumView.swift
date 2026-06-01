@@ -249,21 +249,10 @@ struct LeaderboardEntryStats: View {
     }
 
     private func statIcon(symbol: String, style: StatIconStyle) -> some View {
-        ZStack {
-            Circle()
-                .fill(iconBadgeFill(for: style))
-                .frame(width: iconBadgeSize, height: iconBadgeSize)
-            Image(systemName: symbol)
-                .font(.system(size: iconBadgeSymbolSize, weight: .semibold))
-                .foregroundStyle(iconForeground(for: style))
-        }
-    }
-
-    private func iconBadgeFill(for style: StatIconStyle) -> Color {
-        switch style {
-        case .coin: return Color.categoryHoney.opacity(0.18)
-        case .storage: return Color.secondaryColor.opacity(0.16)
-        }
+        Image(systemName: symbol)
+            .font(.system(size: iconBadgeSymbolSize, weight: .semibold))
+            .foregroundStyle(iconForeground(for: style))
+            .frame(width: iconBadgeSize, height: iconBadgeSize)
     }
 
     private func iconForeground(for style: StatIconStyle) -> some ShapeStyle {
