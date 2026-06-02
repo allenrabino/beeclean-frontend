@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Leaderboard Row
 //
 // List row for ranks 4+. The current user's row lifts as a white card
-// with a soft shadow; rank sits outside the card on the left.
+// with a soft shadow; rank stays inside the card like every other row.
 
 struct LeaderboardRow: View {
     let entry: LeaderboardEntry
@@ -38,31 +38,26 @@ struct LeaderboardRow: View {
     // MARK: Self (elevated card)
 
     private var selfRow: some View {
-        HStack(spacing: 10) {
-            Text("\(entry.rank)")
+        HStack(spacing: 12) {
+            rankLabel
+            avatar
+            Text(entry.displayName)
                 .font(.labelMedium)
-                .foregroundColor(.mutedForeground)
-                .frame(width: 24, alignment: .center)
-
-            HStack(spacing: 12) {
-                avatar
-                Text(entry.displayName)
-                    .font(.labelMedium)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.foreground)
-                    .lineLimit(1)
-                Spacer(minLength: 8)
-                statLabel
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: DesignTokens.Radius.lg, style: .continuous)
-                    .fill(Color.card)
-            )
-            .shadow(color: Color.black.opacity(0.08), radius: 16, x: 0, y: 6)
-            .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
+                .fontWeight(.semibold)
+                .foregroundColor(.foreground)
+                .lineLimit(1)
+            Spacer(minLength: 8)
+            statLabel
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.lg, style: .continuous)
+                .fill(Color.card)
+        )
+        .shadow(color: Color.black.opacity(0.08), radius: 16, x: 0, y: 6)
+        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
     }
 
     // MARK: Shared
