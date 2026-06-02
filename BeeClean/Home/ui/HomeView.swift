@@ -138,10 +138,10 @@ struct HomeView: View {
             )) {
                 BitePalView()
                     // Single detent — drag down to dismiss only; cannot expand upward.
-                    .presentationDetents([.fraction(0.50)])
+                    .presentationDetents([.fraction(0.62)])
                     .presentationDragIndicator(.visible)
                     .presentationCornerRadius(28)
-                    .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.50)))
+                    .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.62)))
             }
             .navigationDestination(item: Binding(
                 get: { topDestination != .shop ? topDestination : nil },

@@ -122,18 +122,17 @@ struct TodaysCleanupCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 8)
-        // Shop opens as a bottom sheet (BitePal-style): ~50% height so the
-        // dashboard bee stays visible; no duplicate hero inside the sheet.
+        // Shop bottom sheet — tall enough for the grid; bee stays in the top ~38%.
         .sheet(isPresented: Binding(
             get: { topDestination == .shop },
             set: { if !$0 { topDestination = nil } }
         )) {
             BitePalView()
                 // Single detent — drag down to dismiss only; cannot expand upward.
-                .presentationDetents([.fraction(0.50)])
+                .presentationDetents([.fraction(0.62)])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(28)
-                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.50)))
+                .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.62)))
         }
         .navigationDestination(item: Binding(
             get: { topDestination != .shop ? topDestination : nil },
