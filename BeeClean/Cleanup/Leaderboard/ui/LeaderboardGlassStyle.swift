@@ -71,7 +71,7 @@ struct LeaderboardGlassAvatarRing: View {
 // MARK: - Placeholder Avatar
 //
 // 3D glossy spheres for the ladder — #1 gold, #2 silver, #3 bronze,
-// #4–100 iridescent vortex. Real bee on `LeaderboardDetailView` after tap.
+// #4–100 soft cloud-mist gradients. Real bee on `LeaderboardDetailView` after tap.
 
 enum LeaderboardAvatarPalette {
     static let lightCenter = UnitPoint(x: 0.34, y: 0.28)
@@ -80,7 +80,21 @@ enum LeaderboardAvatarPalette {
         case gold
         case silver
         case bronze
-        case vortex(AngularGradient)
+        case mist(MistPalette)
+    }
+
+    struct MistBlob {
+        let color: Color
+        let center: UnitPoint
+        let scale: CGFloat
+    }
+
+    struct MistPalette {
+        let foundation: [Color]
+        let blobs: [MistBlob]
+        let driftTop: Color
+        let driftBottom: Color
+        let shadowTint: Color
     }
 
     static func sphereKind(for entry: LeaderboardEntry) -> SphereKind {
@@ -88,7 +102,7 @@ enum LeaderboardAvatarPalette {
         case 1: return .gold
         case 2: return .silver
         case 3: return .bronze
-        default: return .vortex(vortexGradient(for: entry.id))
+        default: return .mist(mistPalette(for: entry.id))
         }
     }
 
@@ -119,11 +133,11 @@ enum LeaderboardAvatarPalette {
                 Color(hex: "D4823E"),
                 Color(hex: "B86A2E")
             ]
-        case .vortex:
+        case .mist:
             colors = [
-                Color(hex: "5C5C70"),
-                Color(hex: "454556"),
-                Color(hex: "32323F")
+                Color(hex: "FAFCFF"),
+                Color(hex: "F0F4FF"),
+                Color(hex: "E8EEF8")
             ]
         }
         return RadialGradient(
@@ -134,29 +148,47 @@ enum LeaderboardAvatarPalette {
         )
     }
 
-    /// Multi-color swirl for ranks 4–100 (stable per user id).
-    static func vortexGradient(for entryId: String) -> AngularGradient {
-        let sets: [[String]] = [
-            ["FF2D92", "FF3B30", "34C759", "5AC8FA", "5856D6", "AF52DE"],
-            ["FF6B6B", "FFE66D", "4ECDC4", "45B7D1", "96CEB4", "FF9FF3"],
-            ["F368E0", "FF6B35", "F7C948", "00D2FF", "3A86FF", "8338EC"],
-            ["EF476F", "FFD166", "06D6A0", "118AB2", "073B4C", "9B5DE5"],
-            ["FB5607", "FFBE0B", "8338EC", "3A86FF", "FF006E", "06FFA5"],
-            ["E63946", "F4A261", "2A9D8F", "264653", "E9C46A", "8E44AD"],
-            ["FF0A54", "FF477E", "FF7096", "FF85A1", "FBB1BD", "F9DEC9"],
-            ["7209B7", "3A0CA3", "4361EE", "4CC9F0", "F72585", "B5179E"],
-            ["06FFA5", "00D4FF", "7B2FF7", "F107A3", "FFEE32", "FF3CAC"],
-            ["00F5D4", "00BBF9", "9B5DE5", "F15BB5", "FEE440", "00F5D4"],
+    /// Soft cloud / smoke palette for ranks 4–100 (stable per user id).
+    static func mistPalette(for entryId: String) -> MistPalette {
+        let schemes: [(foundation: [String], blobs: [String], drift: (String, String), shadow: String)] = [
+            (["FAF8FF", "F3EEFF", "E9E0FF"], ["DDD6FE", "C4B5FD", "E0E7FF", "F5F3FF"], ("EDE9FE", "E0F2FE"), "A78BFA"),
+            (["FFF8FB", "FFF1F5", "FFE4EC"], ["FECDD3", "FBCFE8", "FDA4AF", "FFE4E6"], ("FCE7F3", "FFEDD5"), "FB7185"),
+            (["F8FDFF", "ECFEFF", "E0F2FE"], ["BAE6FD", "A5F3FC", "7DD3FC", "E0F2FE"], ("CFFAFE", "E0E7FF"), "38BDF8"),
+            (["FAFAFF", "EEF2FF", "E8EDFF"], ["C7D2FE", "A5B4FC", "E9D5FF", "F0ABFC"], ("E0E7FF", "FAE8FF"), "818CF8"),
+            (["F7FDF9", "F0FDF4", "ECFDF5"], ["BBF7D0", "A7F3D0", "D9F99D", "E0F2FE"], ("DCFCE7", "E0F2FE"), "4ADE80"),
+            (["FFFBF5", "FFF7ED", "FFEDD5"], ["FED7AA", "FBCFE8", "FDE68A", "E9D5FF"], ("FFEDD5", "FCE7F3"), "F59E0B"),
+            (["FAFAFF", "F5F3FF", "EDE9FE"], ["E9D5FF", "DDD6FE", "C4B5FD", "F0ABFC"], ("F5F3FF", "E0E7FF"), "C084FC"),
+            (["F8FAFC", "F1F5F9", "E2E8F0"], ["E2E8F0", "CBD5E1", "E9D5FF", "BAE6FD"], ("F1F5F9", "E0E7FF"), "94A3B8"),
+            (["FFF9FB", "FFF1F2", "FFEDD5"], ["FECACA", "FBCFE8", "FDE68A", "BAE6FD"], ("FFE4E6", "E0F2FE"), "F472B6"),
+            (["F5FAFF", "EFF6FF", "E0F2FE"], ["BFDBFE", "BAE6FD", "E9D5FF", "FCE7F3"], ("DBEAFE", "F5F3FF"), "60A5FA"),
         ]
-        let index = stableIndex(entryId, count: sets.count)
-        let hexes = sets[index]
-        let colors = hexes.map { Color(hex: $0) } + [Color(hex: hexes[0])]
-        let rotation = Double(stableIndex(entryId + ":rot", count: 8)) * 45
-        return AngularGradient(
-            gradient: Gradient(colors: colors),
-            center: .center,
-            startAngle: .degrees(rotation),
-            endAngle: .degrees(rotation + 360)
+
+        let index = stableIndex(entryId, count: schemes.count)
+        let scheme = schemes[index]
+        let foundation = scheme.foundation.map { Color(hex: $0) }
+        let blobColors = scheme.blobs.map { Color(hex: $0) }
+
+        let blobs = (0..<4).map { i in
+            let angleDeg = Double(stableIndex(entryId + ":θ\(i)", count: 360))
+            let dist = 0.1 + Double(stableIndex(entryId + ":d\(i)", count: 18)) / 100.0
+            let radians = angleDeg * .pi / 180
+            let scale = 0.62 + CGFloat(stableIndex(entryId + ":s\(i)", count: 22)) / 100.0
+            return MistBlob(
+                color: blobColors[i % blobColors.count],
+                center: UnitPoint(
+                    x: 0.5 + cos(radians) * dist,
+                    y: 0.5 + sin(radians) * dist
+                ),
+                scale: scale
+            )
+        }
+
+        return MistPalette(
+            foundation: foundation,
+            blobs: blobs,
+            driftTop: Color(hex: scheme.drift.0),
+            driftBottom: Color(hex: scheme.drift.1),
+            shadowTint: Color(hex: scheme.shadow)
         )
     }
 
@@ -199,27 +231,8 @@ struct LeaderboardPlaceholderAvatar: View {
         case .gold, .silver, .bronze:
             Circle()
                 .fill(LeaderboardAvatarPalette.metallicRadial(kind: kind, size: size))
-        case .vortex(let swirl):
-            ZStack {
-                Circle()
-                    .fill(LeaderboardAvatarPalette.metallicRadial(kind: kind, size: size))
-                Circle()
-                    .fill(swirl)
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.white.opacity(0.22),
-                                Color.clear,
-                                Color.black.opacity(0.18)
-                            ],
-                            center: LeaderboardAvatarPalette.lightCenter,
-                            startRadius: 0,
-                            endRadius: size * 0.52
-                        )
-                    )
-                    .blendMode(.overlay)
-            }
+        case .mist(let palette):
+            LeaderboardMistSphere(palette: palette, size: size)
         }
     }
 
@@ -230,7 +243,7 @@ struct LeaderboardPlaceholderAvatar: View {
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [Color.white.opacity(0.42), Color.clear],
+                        colors: [Color.white.opacity(isMistSphere ? 0.32 : 0.42), Color.clear],
                         center: UnitPoint(x: 0.32, y: 0.22),
                         startRadius: 0,
                         endRadius: size * 0.38
@@ -241,7 +254,7 @@ struct LeaderboardPlaceholderAvatar: View {
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [Color.clear, Color.black.opacity(0.38)],
+                        colors: [Color.clear, Color.black.opacity(isMistSphere ? 0.18 : 0.38)],
                         center: UnitPoint(x: 0.58, y: 0.88),
                         startRadius: size * 0.08,
                         endRadius: size * 0.52
@@ -255,7 +268,7 @@ struct LeaderboardPlaceholderAvatar: View {
                         colors: [
                             Color.white.opacity(0.5),
                             Color.clear,
-                            Color.black.opacity(0.28),
+                            Color.black.opacity(isMistSphere ? 0.12 : 0.28),
                             Color.clear,
                             Color.white.opacity(0.25)
                         ],
@@ -318,7 +331,7 @@ struct LeaderboardPlaceholderAvatar: View {
                 ),
                 shadow: Color(hex: "8B5A2B")
             )
-        case .vortex:
+        case .mist:
             EmptyView()
         }
     }
@@ -356,15 +369,20 @@ struct LeaderboardPlaceholderAvatar: View {
             .frame(width: size * 0.58, height: size * 0.34)
             .offset(y: -size * 0.2)
             .blur(radius: size * 0.025)
-            .opacity(isPodiumSphere ? 0.5 : 1)
+            .opacity(isPodiumSphere ? 0.5 : 0.65)
             .allowsHitTesting(false)
     }
 
     private var isPodiumSphere: Bool {
         switch kind {
         case .gold, .silver, .bronze: return true
-        case .vortex: return false
+        case .mist: return false
         }
+    }
+
+    private var isMistSphere: Bool {
+        if case .mist = kind { return true }
+        return false
     }
 
     // MARK: Rim
@@ -376,7 +394,7 @@ struct LeaderboardPlaceholderAvatar: View {
                     colors: [
                         Color.white.opacity(0.75),
                         Color.white.opacity(0.2),
-                        Color.black.opacity(0.22)
+                        Color.black.opacity(isMistSphere ? 0.08 : 0.22)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -390,7 +408,95 @@ struct LeaderboardPlaceholderAvatar: View {
         case .gold: return Color(hex: "F0C030")
         case .silver: return Color(hex: "B8BFC8")
         case .bronze: return Color(hex: "D4823E")
-        case .vortex: return Color(hex: "6B6BE8")
+        case .mist(let palette): return palette.shadowTint
         }
+    }
+}
+
+// MARK: - Cloud Mist Sphere (ranks 4–100)
+
+private struct LeaderboardMistSphere: View {
+    let palette: LeaderboardAvatarPalette.MistPalette
+    let size: CGFloat
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: palette.foundation + [palette.foundation.last ?? .white],
+                        center: LeaderboardAvatarPalette.lightCenter,
+                        startRadius: 0,
+                        endRadius: size * 0.58
+                    )
+                )
+
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            palette.driftTop.opacity(0.5),
+                            Color.white.opacity(0.12),
+                            palette.driftBottom.opacity(0.48)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .blendMode(.softLight)
+
+            ForEach(Array(palette.blobs.enumerated()), id: \.offset) { _, blob in
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                blob.color.opacity(0.95),
+                                blob.color.opacity(0.55),
+                                blob.color.opacity(0.12),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: size * blob.scale * 0.5
+                        )
+                    )
+                    .frame(width: size * blob.scale, height: size * blob.scale)
+                    .position(x: size * blob.center.x, y: size * blob.center.y)
+                    .blur(radius: size * 0.09)
+                    .blendMode(.plusLighter)
+            }
+
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            Color.white.opacity(0.5),
+                            Color.white.opacity(0.08),
+                            Color.clear
+                        ],
+                        center: UnitPoint(x: 0.36, y: 0.26),
+                        startRadius: 0,
+                        endRadius: size * 0.42
+                    )
+                )
+                .blendMode(.screen)
+
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            Color.clear,
+                            palette.driftBottom.opacity(0.22),
+                            palette.shadowTint.opacity(0.14)
+                        ],
+                        center: UnitPoint(x: 0.55, y: 0.82),
+                        startRadius: size * 0.05,
+                        endRadius: size * 0.52
+                    )
+                )
+                .blendMode(.multiply)
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
     }
 }
