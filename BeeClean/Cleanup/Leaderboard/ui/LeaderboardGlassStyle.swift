@@ -203,6 +203,8 @@ enum LeaderboardAvatarPalette {
 }
 
 struct LeaderboardPlaceholderAvatar: View {
+    @ObservedObject private var bitePalVM = BitePalViewModel.shared
+
     let entry: LeaderboardEntry
     var size: CGFloat
 
@@ -210,7 +212,56 @@ struct LeaderboardPlaceholderAvatar: View {
         LeaderboardAvatarPalette.sphereKind(for: entry)
     }
 
+    private var selfEquippedIds: [String] {
+        let live = bitePalVM.equippedIds
+        return live.isEmpty ? entry.equippedAccessoryIds : live
+    }
+
     var body: some View {
+        if entry.isSelf {
+            selfBeeAvatar
+        } else {
+            rankedSphereAvatar
+        }
+    }
+
+    // MARK: Self — real bee pfp
+
+    private var selfBeeAvatar: some View {
+        BeeAvatarView(equippedAssetIds: selfEquippedIds, size: size * 0.9)
+            .frame(width: size, height: size)
+            .background(
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(hex: "FFF8E1"), Color(hex: "FFE566")],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .clipShape(Circle())
+            .overlay(
+                Circle()
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color(hex: "FFE566"),
+                                Color(hex: "D4A01C"),
+                                Color(hex: "A87408")
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: max(1.5, size * 0.045)
+                    )
+            )
+            .shadow(color: Color(hex: "D4A01C").opacity(0.28), radius: size * 0.1, x: 0, y: size * 0.06)
+    }
+
+    // MARK: Everyone else — colorful sphere
+
+    private var rankedSphereAvatar: some View {
         ZStack {
             sphereBody
             sphere3DLighting
