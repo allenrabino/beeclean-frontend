@@ -70,59 +70,72 @@ struct LeaderboardGlassAvatarRing: View {
 
 // MARK: - Placeholder Avatar
 //
-// Ladder avatars only — no bee pfp here. #1 gold, #2 silver, #3 bronze;
-// #4–100 get a stable random color vortex per `entry.id`. Real bee lives on
-// `LeaderboardDetailView` after tap.
+// 3D glossy spheres for the ladder — #1 gold, #2 silver, #3 bronze,
+// #4–100 iridescent vortex. Real bee on `LeaderboardDetailView` after tap.
 
 enum LeaderboardAvatarPalette {
-    static func fill(for entry: LeaderboardEntry) -> AnyShapeStyle {
+    private static let lightCenter = UnitPoint(x: 0.34, y: 0.28)
+
+    enum SphereKind {
+        case gold
+        case silver
+        case bronze
+        case vortex(AngularGradient)
+    }
+
+    static func sphereKind(for entry: LeaderboardEntry) -> SphereKind {
         switch entry.rank {
-        case 1:
-            return AnyShapeStyle(
-                LinearGradient(
-                    colors: [
-                        Color(hex: "FFE566"),
-                        Color(hex: "F0C030"),
-                        Color(hex: "D4A01C"),
-                        Color(hex: "A87408")
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-        case 2:
-            return AnyShapeStyle(
-                LinearGradient(
-                    colors: [
-                        Color(hex: "FAFAFC"),
-                        Color(hex: "E8EAED"),
-                        Color(hex: "C4C9CF"),
-                        Color(hex: "8A9096")
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-        case 3:
-            return AnyShapeStyle(
-                LinearGradient(
-                    colors: [
-                        Color(hex: "E8A86B"),
-                        Color(hex: "CD7F32"),
-                        Color(hex: "B87333"),
-                        Color(hex: "8B5A2B")
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-        default:
-            return AnyShapeStyle(vortexGradient(for: entry.id))
+        case 1: return .gold
+        case 2: return .silver
+        case 3: return .bronze
+        default: return .vortex(vortexGradient(for: entry.id))
         }
     }
 
+    static func metallicRadial(kind: SphereKind, size: CGFloat) -> RadialGradient {
+        let colors: [Color]
+        switch kind {
+        case .gold:
+            colors = [
+                Color(hex: "FFF9C4"),
+                Color(hex: "FFE566"),
+                Color(hex: "F5C518"),
+                Color(hex: "D4A01C"),
+                Color(hex: "8B6914")
+            ]
+        case .silver:
+            colors = [
+                Color(hex: "FFFFFF"),
+                Color(hex: "F4F5F7"),
+                Color(hex: "D1D5DB"),
+                Color(hex: "9CA3AF"),
+                Color(hex: "6B7280")
+            ]
+        case .bronze:
+            colors = [
+                Color(hex: "FFD8A8"),
+                Color(hex: "E8A86B"),
+                Color(hex: "CD7F32"),
+                Color(hex: "A05A1F"),
+                Color(hex: "6B3E12")
+            ]
+        case .vortex:
+            colors = [
+                Color(hex: "4A4A5A"),
+                Color(hex: "2D2D3A"),
+                Color(hex: "1A1A24")
+            ]
+        }
+        return RadialGradient(
+            colors: colors,
+            center: lightCenter,
+            startRadius: size * 0.02,
+            endRadius: size * 0.58
+        )
+    }
+
     /// Multi-color swirl for ranks 4–100 (stable per user id).
-    private static func vortexGradient(for entryId: String) -> AngularGradient {
+    static func vortexGradient(for entryId: String) -> AngularGradient {
         let sets: [[String]] = [
             ["FF2D92", "FF3B30", "34C759", "5AC8FA", "5856D6", "AF52DE"],
             ["FF6B6B", "FFE66D", "4ECDC4", "45B7D1", "96CEB4", "FF9FF3"],
@@ -161,13 +174,145 @@ struct LeaderboardPlaceholderAvatar: View {
     let entry: LeaderboardEntry
     var size: CGFloat
 
+    private var kind: LeaderboardAvatarPalette.SphereKind {
+        LeaderboardAvatarPalette.sphereKind(for: entry)
+    }
+
     var body: some View {
-        Circle()
-            .fill(LeaderboardAvatarPalette.fill(for: entry))
-            .frame(width: size, height: size)
-            .overlay(
+        ZStack {
+            sphereBody
+            sphere3DLighting
+            sphereGloss
+            sphereRim
+        }
+        .frame(width: size, height: size)
+        .shadow(color: shadowColor.opacity(0.45), radius: size * 0.14, x: 0, y: size * 0.1)
+        .shadow(color: Color.black.opacity(0.12), radius: size * 0.06, x: 0, y: size * 0.04)
+    }
+
+    // MARK: Body
+
+    @ViewBuilder
+    private var sphereBody: some View {
+        switch kind {
+        case .gold, .silver, .bronze:
+            Circle()
+                .fill(LeaderboardAvatarPalette.metallicRadial(kind: kind, size: size))
+        case .vortex(let swirl):
+            ZStack {
                 Circle()
-                    .strokeBorder(Color.white.opacity(entry.rank <= 3 ? 0.35 : 0.22), lineWidth: max(1, size * 0.04))
+                    .fill(LeaderboardAvatarPalette.metallicRadial(kind: kind, size: size))
+                Circle()
+                    .fill(swirl)
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.white.opacity(0.22),
+                                Color.clear,
+                                Color.black.opacity(0.18)
+                            ],
+                            center: LeaderboardAvatarPalette.lightCenter,
+                            startRadius: 0,
+                            endRadius: size * 0.52
+                        )
+                    )
+                    .blendMode(.overlay)
+            }
+        }
+    }
+
+    // MARK: 3D Lighting
+
+    private var sphere3DLighting: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [Color.white.opacity(0.42), Color.clear],
+                        center: UnitPoint(x: 0.32, y: 0.22),
+                        startRadius: 0,
+                        endRadius: size * 0.38
+                    )
+                )
+                .blendMode(.plusLighter)
+
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [Color.clear, Color.black.opacity(0.38)],
+                        center: UnitPoint(x: 0.58, y: 0.88),
+                        startRadius: size * 0.08,
+                        endRadius: size * 0.52
+                    )
+                )
+                .blendMode(.multiply)
+
+            Circle()
+                .strokeBorder(
+                    AngularGradient(
+                        colors: [
+                            Color.white.opacity(0.5),
+                            Color.clear,
+                            Color.black.opacity(0.28),
+                            Color.clear,
+                            Color.white.opacity(0.25)
+                        ],
+                        center: .center
+                    ),
+                    lineWidth: max(1, size * 0.035)
+                )
+                .blur(radius: 0.5)
+                .padding(size * 0.04)
+        }
+        .clipShape(Circle())
+    }
+
+    // MARK: Gloss
+
+    private var sphereGloss: some View {
+        Ellipse()
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.78),
+                        Color.white.opacity(0.22),
+                        Color.clear
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
             )
+            .frame(width: size * 0.58, height: size * 0.34)
+            .offset(y: -size * 0.2)
+            .blur(radius: size * 0.025)
+            .allowsHitTesting(false)
+    }
+
+    // MARK: Rim
+
+    private var sphereRim: some View {
+        Circle()
+            .strokeBorder(
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.75),
+                        Color.white.opacity(0.2),
+                        Color.black.opacity(0.22)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                lineWidth: max(1.2, size * 0.045)
+            )
+    }
+
+    private var shadowColor: Color {
+        switch kind {
+        case .gold: return Color(hex: "D4A01C")
+        case .silver: return Color(hex: "9CA3AF")
+        case .bronze: return Color(hex: "B87333")
+        case .vortex: return Color(hex: "5B5BD6")
+        }
     }
 }
