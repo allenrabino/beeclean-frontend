@@ -71,10 +71,14 @@ struct LeaderboardGlassAvatarRing: View {
 // MARK: - Placeholder Avatar
 //
 // 3D glossy spheres for the ladder — #1 gold, #2 silver, #3 bronze,
-// #4–100 soft cloud-mist gradients. Real bee on `LeaderboardDetailView` after tap.
+// #4–100 soft cloud-mist gradients. "You" rows use the real bee pfp.
+
+/// File-scoped so `LeaderboardMistSphere` and the palette enum can share it.
+private enum LeaderboardSphereMetrics {
+    static let lightCenter = UnitPoint(x: 0.34, y: 0.28)
+}
 
 enum LeaderboardAvatarPalette {
-    static let lightCenter = UnitPoint(x: 0.34, y: 0.28)
 
     enum SphereKind {
         case gold
@@ -142,7 +146,7 @@ enum LeaderboardAvatarPalette {
         }
         return RadialGradient(
             colors: colors,
-            center: lightCenter,
+            center: LeaderboardSphereMetrics.lightCenter,
             startRadius: size * 0.02,
             endRadius: size * 0.58
         )
@@ -217,29 +221,24 @@ struct LeaderboardPlaceholderAvatar: View {
         return live.isEmpty ? entry.equippedAccessoryIds : live
     }
 
+    private var showsSelfBee: Bool {
+        entry.isSelf || entry.id == "self"
+    }
+
     var body: some View {
-        if entry.isSelf {
+        if showsSelfBee {
             selfBeeAvatar
         } else {
             rankedSphereAvatar
         }
     }
 
-    // MARK: Self — real bee pfp
+    // MARK: Self — real bee pfp (Your Rank card + "You" row)
 
     private var selfBeeAvatar: some View {
-        BeeAvatarView(equippedAssetIds: selfEquippedIds, size: size * 0.9)
+        BeeAvatarView(equippedAssetIds: selfEquippedIds, size: size * 0.92)
             .frame(width: size, height: size)
-            .background(
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(hex: "FFF8E1"), Color(hex: "FFE566")],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            )
+            .background(Circle().fill(Color.card))
             .clipShape(Circle())
             .overlay(
                 Circle()
@@ -480,7 +479,7 @@ private struct LeaderboardMistSphere: View {
                 .fill(
                     RadialGradient(
                         colors: palette.foundation + [palette.foundation.last ?? .white],
-                        center: LeaderboardAvatarPalette.lightCenter,
+                        center: LeaderboardSphereMetrics.lightCenter,
                         startRadius: 0,
                         endRadius: size * 0.58
                     )

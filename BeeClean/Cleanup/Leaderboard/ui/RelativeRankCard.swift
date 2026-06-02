@@ -59,7 +59,7 @@ struct RelativeRankCard: View {
     private func rankRow(_ entry: LeaderboardEntry) -> some View {
         HStack(spacing: 12) {
             ZStack {
-                LeaderboardPlaceholderAvatar(entry: entry, size: 56)
+                LeaderboardPlaceholderAvatar(entry: selfRankEntry(entry), size: 56)
                 if entry.inTop100 {
                     LeaderboardGlassAvatarRing(isSelf: true)
                 }
@@ -102,6 +102,23 @@ struct RelativeRankCard: View {
                 progress: entry.progressToNextRank
             )
         }
+    }
+
+    /// Always mark as self so the avatar shows the user's bee, not a mist circle.
+    private func selfRankEntry(_ entry: LeaderboardEntry) -> LeaderboardEntry {
+        LeaderboardEntry(
+            id: entry.id,
+            rank: entry.rank,
+            displayName: entry.displayName,
+            coins: entry.coins,
+            storageFreedGB: entry.storageFreedGB,
+            streak: entry.streak,
+            equippedAccessoryIds: entry.equippedAccessoryIds,
+            isSelf: true,
+            coinsToNextRank: entry.coinsToNextRank,
+            progressToNextRank: entry.progressToNextRank,
+            coinsToTop100: entry.coinsToTop100
+        )
     }
 
     private func progressBar(title: String, detail: String, progress: Double) -> some View {
