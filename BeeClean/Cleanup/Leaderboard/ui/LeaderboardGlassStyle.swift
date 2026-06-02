@@ -135,9 +135,9 @@ enum LeaderboardAvatarPalette {
             ]
         case .mist:
             colors = [
-                Color(hex: "FAFCFF"),
-                Color(hex: "F0F4FF"),
-                Color(hex: "E8EEF8")
+                Color(hex: "F5F0FF"),
+                Color(hex: "EDE9FE"),
+                Color(hex: "DDD6FE")
             ]
         }
         return RadialGradient(
@@ -151,16 +151,16 @@ enum LeaderboardAvatarPalette {
     /// Soft cloud / smoke palette for ranks 4–100 (stable per user id).
     static func mistPalette(for entryId: String) -> MistPalette {
         let schemes: [(foundation: [String], blobs: [String], drift: (String, String), shadow: String)] = [
-            (["FAF8FF", "F3EEFF", "E9E0FF"], ["DDD6FE", "C4B5FD", "E0E7FF", "F5F3FF"], ("EDE9FE", "E0F2FE"), "A78BFA"),
-            (["FFF8FB", "FFF1F5", "FFE4EC"], ["FECDD3", "FBCFE8", "FDA4AF", "FFE4E6"], ("FCE7F3", "FFEDD5"), "FB7185"),
-            (["F8FDFF", "ECFEFF", "E0F2FE"], ["BAE6FD", "A5F3FC", "7DD3FC", "E0F2FE"], ("CFFAFE", "E0E7FF"), "38BDF8"),
-            (["FAFAFF", "EEF2FF", "E8EDFF"], ["C7D2FE", "A5B4FC", "E9D5FF", "F0ABFC"], ("E0E7FF", "FAE8FF"), "818CF8"),
-            (["F7FDF9", "F0FDF4", "ECFDF5"], ["BBF7D0", "A7F3D0", "D9F99D", "E0F2FE"], ("DCFCE7", "E0F2FE"), "4ADE80"),
-            (["FFFBF5", "FFF7ED", "FFEDD5"], ["FED7AA", "FBCFE8", "FDE68A", "E9D5FF"], ("FFEDD5", "FCE7F3"), "F59E0B"),
-            (["FAFAFF", "F5F3FF", "EDE9FE"], ["E9D5FF", "DDD6FE", "C4B5FD", "F0ABFC"], ("F5F3FF", "E0E7FF"), "C084FC"),
-            (["F8FAFC", "F1F5F9", "E2E8F0"], ["E2E8F0", "CBD5E1", "E9D5FF", "BAE6FD"], ("F1F5F9", "E0E7FF"), "94A3B8"),
-            (["FFF9FB", "FFF1F2", "FFEDD5"], ["FECACA", "FBCFE8", "FDE68A", "BAE6FD"], ("FFE4E6", "E0F2FE"), "F472B6"),
-            (["F5FAFF", "EFF6FF", "E0F2FE"], ["BFDBFE", "BAE6FD", "E9D5FF", "FCE7F3"], ("DBEAFE", "F5F3FF"), "60A5FA"),
+            (["EDE9FE", "C4B5FD", "A78BFA"], ["8B5CF6", "22D3EE", "F472B6", "FDE047", "6366F1"], ("A855F7", "22D3EE"), "7C3AED"),
+            (["FFE4E6", "FDA4AF", "FB7185"], ["FF4D6D", "FF6B9D", "FB923C", "FACC15", "F472B6"], ("FB7185", "FDE047"), "E11D48"),
+            (["CFFAFE", "67E8F9", "38BDF8"], ["06B6D4", "3B82F6", "A78BFA", "34D399", "22D3EE"], ("22D3EE", "818CF8"), "0284C7"),
+            (["E0E7FF", "A5B4FC", "818CF8"], ["6366F1", "EC4899", "F0ABFC", "2DD4BF", "F59E0B"], ("818CF8", "F472B6"), "4F46E5"),
+            (["D1FAE5", "6EE7B7", "34D399"], ["10B981", "22D3EE", "A3E635", "4ADE80", "2DD4BF"], ("4ADE80", "22D3EE"), "059669"),
+            (["FFEDD5", "FDBA74", "FB923C"], ["F97316", "FACC15", "F472B6", "FB7185", "A78BFA"], ("FB923C", "F472B6"), "EA580C"),
+            (["F3E8FF", "D8B4FE", "C084FC"], ["A855F7", "EC4899", "F472B6", "38BDF8", "FDE047"], ("C084FC", "38BDF8"), "9333EA"),
+            (["E0F2FE", "93C5FD", "60A5FA"], ["3B82F6", "818CF8", "F0ABFC", "22D3EE", "A3E635"], ("60A5FA", "F0ABFC"), "2563EB"),
+            (["FCE7F3", "F9A8D4", "F472B6"], ["EC4899", "FB7185", "F59E0B", "38BDF8", "A78BFA"], ("F472B6", "38BDF8"), "DB2777"),
+            (["CCFBF1", "5EEAD4", "2DD4BF"], ["14B8A6", "06B6D4", "6366F1", "F472B6", "FACC15"], ("2DD4BF", "818CF8"), "0D9488"),
         ]
 
         let index = stableIndex(entryId, count: schemes.count)
@@ -168,11 +168,11 @@ enum LeaderboardAvatarPalette {
         let foundation = scheme.foundation.map { Color(hex: $0) }
         let blobColors = scheme.blobs.map { Color(hex: $0) }
 
-        let blobs = (0..<4).map { i in
+        let blobs = (0..<5).map { i in
             let angleDeg = Double(stableIndex(entryId + ":θ\(i)", count: 360))
             let dist = 0.1 + Double(stableIndex(entryId + ":d\(i)", count: 18)) / 100.0
             let radians = angleDeg * .pi / 180
-            let scale = 0.62 + CGFloat(stableIndex(entryId + ":s\(i)", count: 22)) / 100.0
+            let scale = 0.68 + CGFloat(stableIndex(entryId + ":s\(i)", count: 24)) / 100.0
             return MistBlob(
                 color: blobColors[i % blobColors.count],
                 center: UnitPoint(
@@ -219,7 +219,7 @@ struct LeaderboardPlaceholderAvatar: View {
             sphereRim
         }
         .frame(width: size, height: size)
-        .shadow(color: shadowColor.opacity(0.45), radius: size * 0.14, x: 0, y: size * 0.1)
+        .shadow(color: shadowColor.opacity(isMistSphere ? 0.55 : 0.45), radius: size * 0.14, x: 0, y: size * 0.1)
         .shadow(color: Color.black.opacity(0.12), radius: size * 0.06, x: 0, y: size * 0.04)
     }
 
@@ -369,7 +369,7 @@ struct LeaderboardPlaceholderAvatar: View {
             .frame(width: size * 0.58, height: size * 0.34)
             .offset(y: -size * 0.2)
             .blur(radius: size * 0.025)
-            .opacity(isPodiumSphere ? 0.5 : 0.65)
+            .opacity(isPodiumSphere ? 0.5 : 0.38)
             .allowsHitTesting(false)
     }
 
@@ -419,6 +419,10 @@ private struct LeaderboardMistSphere: View {
     let palette: LeaderboardAvatarPalette.MistPalette
     let size: CGFloat
 
+    private var auroraColors: [Color] {
+        palette.blobs.map(\.color) + [palette.driftTop, palette.driftBottom]
+    }
+
     var body: some View {
         ZStack {
             Circle()
@@ -433,70 +437,80 @@ private struct LeaderboardMistSphere: View {
 
             Circle()
                 .fill(
+                    AngularGradient(
+                        colors: auroraColors + [auroraColors.first ?? palette.driftTop],
+                        center: .center
+                    )
+                )
+                .opacity(0.72)
+                .blur(radius: size * 0.11)
+                .blendMode(.screen)
+
+            Circle()
+                .fill(
                     LinearGradient(
                         colors: [
-                            palette.driftTop.opacity(0.5),
-                            Color.white.opacity(0.12),
-                            palette.driftBottom.opacity(0.48)
+                            palette.driftTop.opacity(0.72),
+                            palette.driftBottom.opacity(0.65)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
-                .blendMode(.softLight)
+                .blendMode(.overlay)
 
             ForEach(Array(palette.blobs.enumerated()), id: \.offset) { _, blob in
                 Circle()
                     .fill(
                         RadialGradient(
                             colors: [
-                                blob.color.opacity(0.95),
-                                blob.color.opacity(0.55),
-                                blob.color.opacity(0.12),
+                                blob.color,
+                                blob.color.opacity(0.82),
+                                blob.color.opacity(0.38),
                                 Color.clear
                             ],
                             center: .center,
                             startRadius: 0,
-                            endRadius: size * blob.scale * 0.5
+                            endRadius: size * blob.scale * 0.52
                         )
                     )
                     .frame(width: size * blob.scale, height: size * blob.scale)
                     .position(x: size * blob.center.x, y: size * blob.center.y)
-                    .blur(radius: size * 0.09)
-                    .blendMode(.plusLighter)
+                    .blur(radius: size * 0.065)
+                    .blendMode(.normal)
             }
 
             Circle()
                 .fill(
                     RadialGradient(
                         colors: [
-                            Color.white.opacity(0.5),
-                            Color.white.opacity(0.08),
+                            Color.white.opacity(0.28),
                             Color.clear
                         ],
                         center: UnitPoint(x: 0.36, y: 0.26),
                         startRadius: 0,
-                        endRadius: size * 0.42
+                        endRadius: size * 0.38
                     )
                 )
-                .blendMode(.screen)
+                .blendMode(.softLight)
 
             Circle()
                 .fill(
                     RadialGradient(
                         colors: [
                             Color.clear,
-                            palette.driftBottom.opacity(0.22),
-                            palette.shadowTint.opacity(0.14)
+                            palette.shadowTint.opacity(0.28)
                         ],
                         center: UnitPoint(x: 0.55, y: 0.82),
                         startRadius: size * 0.05,
-                        endRadius: size * 0.52
+                        endRadius: size * 0.5
                     )
                 )
                 .blendMode(.multiply)
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
+        .saturation(1.22)
+        .contrast(1.06)
     }
 }
