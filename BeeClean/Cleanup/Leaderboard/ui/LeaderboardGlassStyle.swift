@@ -74,7 +74,7 @@ struct LeaderboardGlassAvatarRing: View {
 // #4–100 iridescent vortex. Real bee on `LeaderboardDetailView` after tap.
 
 enum LeaderboardAvatarPalette {
-    private static let lightCenter = UnitPoint(x: 0.34, y: 0.28)
+    static let lightCenter = UnitPoint(x: 0.34, y: 0.28)
 
     enum SphereKind {
         case gold
