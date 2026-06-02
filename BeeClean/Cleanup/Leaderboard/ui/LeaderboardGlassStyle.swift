@@ -97,33 +97,33 @@ enum LeaderboardAvatarPalette {
         switch kind {
         case .gold:
             colors = [
-                Color(hex: "FFF9C4"),
+                Color(hex: "FFFDE7"),
+                Color(hex: "FFEF8A"),
                 Color(hex: "FFE566"),
-                Color(hex: "F5C518"),
-                Color(hex: "D4A01C"),
-                Color(hex: "8B6914")
+                Color(hex: "F5C842"),
+                Color(hex: "D4A82A")
             ]
         case .silver:
             colors = [
                 Color(hex: "FFFFFF"),
-                Color(hex: "F4F5F7"),
-                Color(hex: "D1D5DB"),
-                Color(hex: "9CA3AF"),
-                Color(hex: "6B7280")
+                Color(hex: "FAFBFC"),
+                Color(hex: "E8ECF2"),
+                Color(hex: "CDD3DC"),
+                Color(hex: "A8B0BC")
             ]
         case .bronze:
             colors = [
-                Color(hex: "FFD8A8"),
-                Color(hex: "E8A86B"),
-                Color(hex: "CD7F32"),
-                Color(hex: "A05A1F"),
-                Color(hex: "6B3E12")
+                Color(hex: "FFF0D6"),
+                Color(hex: "FFC98E"),
+                Color(hex: "F0A05C"),
+                Color(hex: "D4823E"),
+                Color(hex: "B86A2E")
             ]
         case .vortex:
             colors = [
-                Color(hex: "4A4A5A"),
-                Color(hex: "2D2D3A"),
-                Color(hex: "1A1A24")
+                Color(hex: "5C5C70"),
+                Color(hex: "454556"),
+                Color(hex: "32323F")
             ]
         }
         return RadialGradient(
@@ -182,6 +182,7 @@ struct LeaderboardPlaceholderAvatar: View {
         ZStack {
             sphereBody
             sphere3DLighting
+            podiumEmblem
             sphereGloss
             sphereRim
         }
@@ -268,6 +269,75 @@ struct LeaderboardPlaceholderAvatar: View {
         .clipShape(Circle())
     }
 
+    // MARK: Podium Emblem (#1 crown, #2–#3 medals)
+
+    @ViewBuilder
+    private var podiumEmblem: some View {
+        switch kind {
+        case .gold:
+            Image(systemName: "crown.fill")
+                .font(.system(size: size * 0.36, weight: .bold))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            Color(hex: "FFFDE7"),
+                            Color(hex: "FFE566"),
+                            Color(hex: "E6B422")
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .shadow(color: Color(hex: "A87408").opacity(0.55), radius: 1, y: 1.5)
+                .offset(y: size * 0.02)
+        case .silver:
+            medalEmblem(
+                rank: 2,
+                gradient: LinearGradient(
+                    colors: [
+                        Color(hex: "FFFFFF"),
+                        Color(hex: "E8ECF2"),
+                        Color(hex: "B0B8C4")
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                shadow: Color(hex: "8A9096")
+            )
+        case .bronze:
+            medalEmblem(
+                rank: 3,
+                gradient: LinearGradient(
+                    colors: [
+                        Color(hex: "FFE8C8"),
+                        Color(hex: "F0A05C"),
+                        Color(hex: "C4722A")
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                shadow: Color(hex: "8B5A2B")
+            )
+        case .vortex:
+            EmptyView()
+        }
+    }
+
+    private func medalEmblem(rank: Int, gradient: LinearGradient, shadow: Color) -> some View {
+        ZStack {
+            Image(systemName: "medal.fill")
+                .font(.system(size: size * 0.4, weight: .semibold))
+                .foregroundStyle(gradient)
+                .shadow(color: shadow.opacity(0.5), radius: 1, y: 1.5)
+
+            Text("\(rank)")
+                .font(.system(size: size * 0.17, weight: .heavy, design: .rounded))
+                .foregroundColor(rank == 2 ? Color(hex: "4B5563") : Color(hex: "5C3D1E"))
+                .offset(y: size * 0.05)
+        }
+        .offset(y: size * 0.02)
+    }
+
     // MARK: Gloss
 
     private var sphereGloss: some View {
@@ -286,7 +356,15 @@ struct LeaderboardPlaceholderAvatar: View {
             .frame(width: size * 0.58, height: size * 0.34)
             .offset(y: -size * 0.2)
             .blur(radius: size * 0.025)
+            .opacity(isPodiumSphere ? 0.5 : 1)
             .allowsHitTesting(false)
+    }
+
+    private var isPodiumSphere: Bool {
+        switch kind {
+        case .gold, .silver, .bronze: return true
+        case .vortex: return false
+        }
     }
 
     // MARK: Rim
@@ -309,10 +387,10 @@ struct LeaderboardPlaceholderAvatar: View {
 
     private var shadowColor: Color {
         switch kind {
-        case .gold: return Color(hex: "D4A01C")
-        case .silver: return Color(hex: "9CA3AF")
-        case .bronze: return Color(hex: "B87333")
-        case .vortex: return Color(hex: "5B5BD6")
+        case .gold: return Color(hex: "F0C030")
+        case .silver: return Color(hex: "B8BFC8")
+        case .bronze: return Color(hex: "D4823E")
+        case .vortex: return Color(hex: "6B6BE8")
         }
     }
 }
