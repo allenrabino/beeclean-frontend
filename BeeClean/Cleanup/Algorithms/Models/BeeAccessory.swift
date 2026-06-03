@@ -42,26 +42,50 @@ enum AccessoryCategory: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    /// SF Symbol shown as the category tab icon (and as fallback art
-    /// for items whose imageset is not yet in the asset catalog).
-    var sfSymbol: String {
+    /// SF Symbol for fallback item art in grids and inventory.
+    var sfSymbol: String { shopSymbol }
+
+    /// Distinct icon for the shop category strip (polished, recognizable).
+    var shopSymbol: String {
         switch self {
-        case .backgrounds: return "photo.fill"
-        case .auras:       return "sparkles"
-        case .wings:       return "wind"
-        case .outfits:     return "tshirt.fill"
-        case .jackets:     return "cloud.fill"
-        case .shoes:       return "shoeprints.fill"
-        case .belts:       return "rectangle.compress.vertical"
-        case .ties:        return "comb.fill"
-        case .chains:      return "link.circle.fill"
-        case .bracelets:   return "circle.hexagongrid.fill"
+        case .backgrounds: return "photo.on.rectangle.angled"
+        case .auras:       return "sparkle"
+        case .wings:       return "bird.fill"
+        case .outfits:     return "backpack.fill"
+        case .jackets:     return "shield.lefthalf.filled"
+        case .shoes:       return "figure.walk"
+        case .belts:       return "lasso"
+        case .ties:        return "suit.spade.fill"
+        case .chains:      return "link"
+        case .bracelets:   return "circlebadge.2.fill"
         case .watch:       return "applewatch"
         case .diamonds:    return "diamond.fill"
         case .sunglasses:  return "sunglasses.fill"
-        case .antennae:    return "antenna.radiowaves.left.and.right"
-        case .hats:        return "graduationcap.fill"
-        case .rareEffects: return "wand.and.stars"
+        case .antennae:    return "dot.radiowaves.left.and.right"
+        case .hats:        return "crown.fill"
+        case .rareEffects: return "wand.and.stars.inverse"
+        }
+    }
+
+    /// Short label used when generating catalog placeholder names.
+    var shopItemSuffix: String {
+        switch self {
+        case .backgrounds: return "Scene"
+        case .auras:       return "Aura"
+        case .wings:       return "Wings"
+        case .outfits:     return "Fit"
+        case .jackets:     return "Cape"
+        case .shoes:       return "Kicks"
+        case .belts:       return "Belt"
+        case .ties:        return "Tie"
+        case .chains:      return "Chain"
+        case .bracelets:   return "Cuff"
+        case .watch:       return "Watch"
+        case .diamonds:    return "Gem"
+        case .sunglasses:  return "Shades"
+        case .antennae:    return "Antenna"
+        case .hats:        return "Cap"
+        case .rareEffects: return "FX"
         }
     }
 

@@ -112,8 +112,52 @@ enum BeeAccessoryCatalog {
         return items
     }()
 
+    /// Target grid size per category (shop scroll is tuned for this count).
+    static let targetCountPerCategory = 25
+
     static func items(in category: AccessoryCategory) -> [BeeAccessory] {
-        all.filter { $0.category == category }
+        let defined = all.filter { $0.category == category }
+        guard defined.count < targetCountPerCategory else {
+            return Array(defined.prefix(targetCountPerCategory))
+        }
+        return defined + placeholderItems(
+            category: category,
+            startIndex: defined.count,
+            count: targetCountPerCategory - defined.count
+        )
+    }
+
+    private static let variantPrefixes = [
+        "Dawn", "Dusk", "Glow", "Pulse", "Prism", "Shine", "Royal", "Neon",
+        "Honey", "Buzz", "Hive", "Golden", "Crystal", "Velvet", "Silk",
+        "Chrome", "Aurora", "Midnight", "Solar", "Lunar", "Stinger", "Nectar",
+        "Pollen", "Meadow", "Citrus"
+    ]
+
+    private static func placeholderItems(
+        category: AccessoryCategory,
+        startIndex: Int,
+        count: Int
+    ) -> [BeeAccessory] {
+        guard count > 0 else { return [] }
+        return (0..<count).map { offset in
+            let index = startIndex + offset
+            let prefix = variantPrefixes[index % variantPrefixes.count]
+            let tier = index / variantPrefixes.count
+            let name = tier == 0
+                ? "\(prefix) \(category.shopItemSuffix)"
+                : "\(prefix) \(category.shopItemSuffix) \(tier + 1)"
+            let price = 70 + (index * 18) + (index % 6 == 0 ? 120 : 0)
+            let premium = index % 9 == 0
+            return BeeAccessory(
+                id: "\(category.rawValue)_variant_\(index)",
+                category: category,
+                displayName: name,
+                price: price,
+                isPremium: premium,
+                rarity: premium ? .epic : .common
+            )
+        }
     }
 
     static func item(id: String) -> BeeAccessory? {

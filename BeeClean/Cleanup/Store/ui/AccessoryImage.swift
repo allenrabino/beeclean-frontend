@@ -52,9 +52,15 @@ struct AccessoryImage: View {
                     )
             }
 
-            Image(systemName: accessory.category.sfSymbol)
-                .font(.system(size: size * 0.34, weight: .semibold))
-                .foregroundStyle(accessory.category.tint)
+            Image(systemName: style == .shopPreview ? accessory.category.shopSymbol : accessory.category.sfSymbol)
+                .font(.system(size: size * (style == .shopPreview ? 0.38 : 0.34), weight: .semibold))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [accessory.category.tint, accessory.category.tint.opacity(0.72)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .padding(size * 0.16)
         }
     }
