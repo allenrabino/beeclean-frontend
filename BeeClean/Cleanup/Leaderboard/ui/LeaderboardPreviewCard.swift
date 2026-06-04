@@ -24,7 +24,14 @@ struct LeaderboardPreviewCard: View {
             }
             .buttonStyle(.plain)
 
-            if let me = vm.selfEntry {
+            if vm.isLoading && vm.entries.isEmpty {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+                .padding(.vertical, 12)
+            } else if let me = vm.selfEntry {
                 Divider().opacity(0.5)
                 LeaderboardRow(entry: me)
             }
@@ -40,6 +47,7 @@ struct LeaderboardPreviewCard: View {
             RoundedRectangle(cornerRadius: DesignTokens.Radius.xl, style: .continuous)
                 .strokeBorder(Color.border, lineWidth: 0.5)
         )
+        .task { await vm.refresh() }
     }
 
     private var header: some View {

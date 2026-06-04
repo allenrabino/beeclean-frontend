@@ -8,75 +8,86 @@ final class LeaderboardViewModel: ObservableObject {
     @Published private(set) var entries: [LeaderboardEntry] = []
     @Published private(set) var selfEntry: LeaderboardEntry?
     @Published private(set) var isLoading: Bool = false
-    @Published private(set) var usesMockData: Bool = true
+    @Published private(set) var usesMockData: Bool = false
+    @Published private(set) var errorMessage: String?
 
-    private init() {
-        refreshLocal()
-    }
+    private init() {}
 
     func refresh() async {
         isLoading = true
+        errorMessage = nil
         defer { isLoading = false }
 
-        if AuthService.shared.isAuthenticated {
-            do {
-                let response = try await LeaderboardService.shared.fetchLeaderboard()
-                apply(response)
-                usesMockData = false
-                return
-            } catch {
-                print("[LeaderboardVM] API fallback to local mock: \(error)")
-            }
+        guard AuthService.shared.isAuthenticated else {
+            entries = []
+            selfEntry = nil
+            usesMockData = false
+            errorMessage = "Sign in to view the global leaderboard."
+            return
         }
 
-        try? await Task.sleep(nanoseconds: 150_000_000)
-        refreshLocal()
-        usesMockData = true
+        do {
+            let response = try await LeaderboardService.shared.fetchLeaderboard()
+            apply(response)
+            usesMockData = false
+        } catch {
+            print("[LeaderboardVM] API error, using offline preview: \(error)")
+            errorMessage = (error as? AuthError)?.localizedDescription ?? error.localizedDescription
+            refreshLocal()
+            usesMockData = true
+        }
     }
 
     private func apply(_ response: LeaderboardResponseDTO) {
-        entries = response.top100.map { mapRow($0, isSelf: false) }
+        let selfUserId = response.selfInfo.entry?.userId ?? AuthService.shared.currentUser?.id
+
+        var mappedTop = response.top100.map { row in
+            mapRow(
+                row,
+                isSelf: selfUserId != nil && row.userId == selfUserId,
+                coinsToNextRank: nil,
+                progressToNextRank: 0,
+                coinsToTop100: nil
+            )
+        }
 
         if let selfRow = response.selfInfo.entry {
-            let mapped = mapRow(
+            let me = mapRow(
                 selfRow,
                 isSelf: true,
+                displayAsYou: true,
+                coinsToNextRank: response.selfInfo.coinsToNextRank,
+                progressToNextRank: response.selfInfo.progressToNextRank,
+                coinsToTop100: response.selfInfo.inTop100 ? nil : response.selfInfo.coinsToTop100
+            )
+            selfEntry = me
+
+            if response.selfInfo.inTop100 {
+                if let index = mappedTop.firstIndex(where: { $0.id == me.id }) {
+                    mappedTop[index] = me
+                } else {
+                    mappedTop.append(me)
+                    mappedTop.sort { $0.coins > $1.coins }
+                    mappedTop = mappedTop.enumerated().map { index, entry in
+                        reRank(entry, rank: index + 1, preserveSelfMeta: entry.isSelf ? me : nil)
+                    }
+                }
+            }
+        } else {
+            selfEntry = localSelfEntry(
                 coinsToNextRank: response.selfInfo.coinsToNextRank,
                 progressToNextRank: response.selfInfo.progressToNextRank,
                 coinsToTop100: response.selfInfo.coinsToTop100
             )
-            selfEntry = mapped
-
-            if !response.selfInfo.inTop100 {
-                // Keep Top 100 clean; self row shown via RelativeRankCard / sticky footer.
-            } else if !entries.contains(where: { $0.id == mapped.id }) {
-                var merged = entries
-                merged.append(mapped)
-                merged.sort { $0.coins > $1.coins }
-                entries = merged.enumerated().map { index, entry in
-                    LeaderboardEntry(
-                        id: entry.id,
-                        rank: index + 1,
-                        displayName: entry.displayName,
-                        coins: entry.coins,
-                        storageFreedGB: entry.storageFreedGB,
-                        streak: entry.streak,
-                        equippedAccessoryIds: entry.equippedAccessoryIds,
-                        isSelf: entry.isSelf,
-                        coinsToNextRank: entry.coinsToNextRank,
-                        progressToNextRank: entry.progressToNextRank,
-                        coinsToTop100: entry.coinsToTop100
-                    )
-                }
-            }
-        } else {
-            refreshLocalSelfOnly(response.selfInfo)
         }
+
+        entries = Array(mappedTop.prefix(100))
     }
 
     private func mapRow(
         _ row: LeaderboardRowDTO,
         isSelf: Bool,
+        displayAsYou: Bool = false,
         coinsToNextRank: Int? = nil,
         progressToNextRank: Double = 0,
         coinsToTop100: Int? = nil
@@ -84,7 +95,7 @@ final class LeaderboardViewModel: ObservableObject {
         LeaderboardEntry(
             id: row.userId,
             rank: row.rank,
-            displayName: row.displayName,
+            displayName: (isSelf && displayAsYou) ? "You" : row.displayName,
             coins: row.coins,
             storageFreedGB: row.storageFreedGB,
             streak: row.streak,
@@ -96,25 +107,50 @@ final class LeaderboardViewModel: ObservableObject {
         )
     }
 
-    private func refreshLocalSelfOnly(_ selfInfo: LeaderboardSelfDTO) {
-        refreshLocal()
-        if var me = selfEntry {
-            me = LeaderboardEntry(
-                id: me.id,
-                rank: me.rank,
-                displayName: me.displayName,
-                coins: me.coins,
-                storageFreedGB: me.storageFreedGB,
-                streak: me.streak,
-                equippedAccessoryIds: me.equippedAccessoryIds,
-                isSelf: true,
-                coinsToNextRank: selfInfo.coinsToNextRank,
-                progressToNextRank: selfInfo.progressToNextRank,
-                coinsToTop100: selfInfo.coinsToTop100
-            )
-            selfEntry = me
-        }
+    private func reRank(
+        _ entry: LeaderboardEntry,
+        rank: Int,
+        preserveSelfMeta: LeaderboardEntry?
+    ) -> LeaderboardEntry {
+        let meta = preserveSelfMeta
+        return LeaderboardEntry(
+            id: entry.id,
+            rank: rank,
+            displayName: entry.displayName,
+            coins: entry.coins,
+            storageFreedGB: entry.storageFreedGB,
+            streak: entry.streak,
+            equippedAccessoryIds: entry.equippedAccessoryIds,
+            isSelf: entry.isSelf,
+            coinsToNextRank: meta?.coinsToNextRank ?? entry.coinsToNextRank,
+            progressToNextRank: meta?.progressToNextRank ?? entry.progressToNextRank,
+            coinsToTop100: meta?.coinsToTop100 ?? entry.coinsToTop100
+        )
     }
+
+    private func localSelfEntry(
+        coinsToNextRank: Int?,
+        progressToNextRank: Double,
+        coinsToTop100: Int?
+    ) -> LeaderboardEntry {
+        let stats = HiveStatsManager.shared
+        let equipped = Array(BitePalViewModel.shared.equippedByCategory.values)
+        return LeaderboardEntry(
+            id: AuthService.shared.currentUser?.id ?? "self",
+            rank: 0,
+            displayName: "You",
+            coins: stats.coinsBalance,
+            storageFreedGB: Double(stats.lifetimeBytesSaved) / 1_000_000_000.0,
+            streak: stats.currentStreak,
+            equippedAccessoryIds: equipped.isEmpty ? [] : equipped,
+            isSelf: true,
+            coinsToNextRank: coinsToNextRank,
+            progressToNextRank: progressToNextRank,
+            coinsToTop100: coinsToTop100
+        )
+    }
+
+    // MARK: - Offline fallback (API unreachable)
 
     private func refreshLocal() {
         let stats = HiveStatsManager.shared
@@ -125,17 +161,14 @@ final class LeaderboardViewModel: ObservableObject {
 
         let mocked = Self.mockTop()
         var combined = mocked
-        let selfAccessories: [String] = selfEquipped.isEmpty
-            ? ["hat_baseball_blue"]
-            : selfEquipped
         let placeholder = LeaderboardEntry(
-            id: "self",
+            id: AuthService.shared.currentUser?.id ?? "self",
             rank: 0,
             displayName: "You",
             coins: selfCoins,
             storageFreedGB: selfGB,
             streak: selfStreak,
-            equippedAccessoryIds: selfAccessories,
+            equippedAccessoryIds: selfEquipped.isEmpty ? ["hat_baseball_blue"] : selfEquipped,
             isSelf: true
         )
         combined.append(placeholder)

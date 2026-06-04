@@ -7,16 +7,24 @@ import SwiftUI
 // and storage cleaned shown alongside. Current user gets an elevated card.
 
 struct LeaderboardView: View {
+    @ObservedObject private var auth = AuthService.shared
     @StateObject private var vm = LeaderboardViewModel.shared
     @State private var detailEntry: LeaderboardEntry?
 
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: 24) {
-                podium
-                listSection
-                if let selfEntry = vm.selfEntry, selfEntry.rank > 100 {
-                    selfSticky(entry: selfEntry)
+                statusBanner
+                if vm.isLoading && vm.entries.isEmpty {
+                    loadingPlaceholder
+                } else if vm.entries.isEmpty {
+                    emptyPlaceholder
+                } else {
+                    podium
+                    listSection
+                    if let selfEntry = vm.selfEntry, selfEntry.rank > 100 {
+                        selfSticky(entry: selfEntry)
+                    }
                 }
             }
             .padding(.horizontal, 16)
@@ -26,10 +34,65 @@ struct LeaderboardView: View {
         .background(Color.background.ignoresSafeArea())
         .navigationTitle("Leaderboard")
         .navigationBarTitleDisplayMode(.inline)
+        .task { await vm.refresh() }
         .refreshable { await vm.refresh() }
+        .onChange(of: auth.isAuthenticated) { _, isAuthed in
+            if isAuthed { Task { await vm.refresh() } }
+        }
         .navigationDestination(item: $detailEntry) { entry in
             LeaderboardDetailView(entry: entry)
         }
+    }
+
+    @ViewBuilder
+    private var statusBanner: some View {
+        if vm.usesMockData, let message = vm.errorMessage {
+            HStack(spacing: 8) {
+                Image(systemName: "wifi.exclamationmark")
+                    .font(.system(size: 14, weight: .semibold))
+                Text("Offline preview — \(message)")
+                    .font(.bodySmall)
+                    .lineLimit(2)
+            }
+            .foregroundColor(.mutedForeground)
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.md, style: .continuous)
+                    .fill(Color.surfaceLight)
+            )
+        } else if let message = vm.errorMessage, vm.entries.isEmpty {
+            Text(message)
+                .font(.bodySmall)
+                .foregroundColor(.mutedForeground)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 8)
+        }
+    }
+
+    private var loadingPlaceholder: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+            Text("Loading leaderboard…")
+                .font(.bodySmall)
+                .foregroundColor(.mutedForeground)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 48)
+    }
+
+    private var emptyPlaceholder: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "trophy")
+                .font(.system(size: 32))
+                .foregroundColor(.mutedForeground)
+            Text(vm.errorMessage ?? "No leaderboard data yet.")
+                .font(.bodySmall)
+                .foregroundColor(.mutedForeground)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 48)
     }
 
     // MARK: Podium
