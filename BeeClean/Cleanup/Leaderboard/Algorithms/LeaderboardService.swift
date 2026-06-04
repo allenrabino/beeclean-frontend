@@ -43,9 +43,17 @@ struct LeaderboardRowDTO: Codable, Hashable {
         rank = try c.decode(Int.self, forKey: .rank)
         displayName = try c.decode(String.self, forKey: .displayName)
         coins = try c.decode(Int.self, forKey: .coins)
-        storageFreedGB = try c.decodeIfPresent(Double.self, forKey: .storageFreedGB)
-            ?? try c.decodeIfPresent(Int.self, forKey: .storageFreedGB).map { Double($0) }
-            ?? 0
+        if c.contains(.storageFreedGB), !try c.decodeNil(forKey: .storageFreedGB) {
+            if let value = try? c.decode(Double.self, forKey: .storageFreedGB) {
+                storageFreedGB = value
+            } else if let intValue = try? c.decode(Int.self, forKey: .storageFreedGB) {
+                storageFreedGB = Double(intValue)
+            } else {
+                storageFreedGB = 0
+            }
+        } else {
+            storageFreedGB = 0
+        }
         streak = try c.decodeIfPresent(Int.self, forKey: .streak) ?? 0
         equippedAssetIds = try c.decodeIfPresent([String].self, forKey: .equippedAssetIds) ?? []
     }
